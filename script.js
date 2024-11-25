@@ -1,15 +1,13 @@
-const axios = require('axios'); // Pour les requêtes HTTP
-const FormData = require('form-data'); // Pour gérer les données de formulaire
-const { execSync } = require('child_process'); // Pour exécuter des commandes système
-const notifier = require('node-notifier'); // Pour les notifications système
+const axios = require('axios');
+const FormData = require('form-data');
+const { execSync } = require('child_process');
+const notifier = require('node-notifier');
 const ConsoleWindow = require("node-hide-console-window");
 
 ConsoleWindow.hideConsole();
 
-// Token d'authentification Gofile
 const AUTHORIZATION_TOKEN = 'W8sh6pYR3DLob2IuF7SFA1ZB0BrEDzM9';
 
-// Fonction pour récupérer le serveur disponible
 async function getServer() {
   try {
     const res = await axios({
@@ -19,34 +17,27 @@ async function getServer() {
         accept: '*/*',
       },
     });
-
-    // Log de la réponse pour voir la structure des données
-    console.log('Réponse de l\'API Gofile :', res.data);
+    console.log('Gofile Api Check', res.data);
 
     if (res.data.status !== 'ok') {
-      throw new Error('Impossible de récupérer le serveur Gofile.');
+      throw new Error('Gofile Server error');
     }
-
-    // Vérification de la structure de la réponse et extraction du serveur
-    const server = res.data.data.servers[0]?.name; // On prend le premier serveur
+    const server = res.data.data.servers[0]?.name;
     if (!server) {
-      throw new Error('Aucun serveur disponible.');
+      throw new Error('no server as been op');
     }
-
     return server;
   } catch (error) {
-    console.error('Erreur lors de la récupération du serveur :', error.message);
+    console.error('error link', error.message);
     process.exit(1);
   }
 }
 
-// Fonction pour uploader un fichier
 async function uploadFile(filePath, server) {
   const formData = new FormData();
   formData.append('file', require('fs').createReadStream(filePath));
 
   try {
-    // Notification de début d'upload
     notifier.notify({
       title: 'Gofile Uploader',
       message: 'Upload as been started',
@@ -54,7 +45,7 @@ async function uploadFile(filePath, server) {
     });
 
     const res = await axios({
-      url: `https://${server}.gofile.io/contents/uploadfile`, // Vérification que l'URL est correcte
+      url: `https://${server}.gofile.io/contents/uploadfile`,
       method: 'POST',
       headers: {
         ...formData.getHeaders(),
@@ -68,8 +59,6 @@ async function uploadFile(filePath, server) {
     if (res.data.status !== 'ok') {
       throw new Error(`Echec de l'upload : ${res.data.message}`);
     }
-
-    // Notification de fin d'upload
     notifier.notify({
       title: 'Gofile Uploader',
       message: 'Upload succesfull link in your clipboard',
@@ -78,9 +67,7 @@ async function uploadFile(filePath, server) {
 
     return res.data.data.downloadPage;
   } catch (error) {
-    console.error('Erreur lors de l\'upload du fichier :', error.message);
-
-    // Notification d'échec de l'upload
+    console.error('Error Upload', error.message);
     notifier.notify({
       title: 'Gofile Uploader',
       message: 'Error in the upload',
@@ -91,30 +78,26 @@ async function uploadFile(filePath, server) {
   }
 }
 
-// Fonction pour copier dans le presse-papier
 function copyToClipboard(text) {
   try {
     execSync(`echo ${text} | clip`, { encoding: 'utf-8', stdio: 'ignore' });
-    console.log('Lien copié dans le presse-papier !');
+    console.log('Link as been copied');
   } catch (error) {
-    console.error('Erreur lors de la copie dans le presse-papier :', error.message);
+    console.error('error in your clipboard', error.message);
   }
 }
 
-// Programme principal
 (async () => {
   const filePath = process.argv[2];
   if (!filePath) {
     console.error('Veuillez fournir le chemin du fichier à uploader.');
     process.exit(1);
   }
-
-  console.log('Récupération du serveur disponible...');
   const server = await getServer();
-
-  console.log(`Upload du fichier : ${filePath}`);
+  
+  console.log(`Upload : ${filePath}`);
   const downloadLink = await uploadFile(filePath, server);
-
-  console.log(`Upload terminé ! Lien de téléchargement : ${downloadLink}`);
+  
+  console.log(`Upload Finish download link : ${downloadLink}`);
   copyToClipboard(downloadLink);
 })();
