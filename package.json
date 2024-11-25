@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "axios": "^1.7.7",
+    "clipboardy": "^4.0.0",
+    "form-data": "^4.0.1",
+    "node-hide-console-window": "^2.2.0",
+    "node-notifier": "^10.0.1"
+  }
+}
